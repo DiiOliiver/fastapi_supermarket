@@ -60,10 +60,7 @@ def read_users(
     skip: int = 0, limit: int = 10, session: Session = Depends(get_session)
 ):
     users = session.scalars(
-        select(User)
-        .where(User.deleted_at.is_(None))
-        .limit(limit)
-        .offset(skip)
+        select(User).where(User.deleted_at.is_(None)).limit(limit).offset(skip)
     ).all()
     return {'users': users}
 
