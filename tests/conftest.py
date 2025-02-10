@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from fastapi_supermarket.core.database import get_session
+from fastapi_supermarket.core.security import get_password_hash
 from fastapi_supermarket.main import app
 from fastapi_supermarket.models import User, table_registry
 
@@ -38,15 +39,18 @@ def session():
 
 @pytest.fixture
 def user(session):
+    pwd = 'Secret123'
     user = User(
         name='Diego',
         cpf='00000000000',
         email='diego.oliveira2@teste.com',
-        password='Secret123',
+        password=get_password_hash(pwd),
     )
 
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    user.clean_password = pwd  # Monkey Patching
 
     return user
