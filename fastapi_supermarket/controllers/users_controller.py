@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from fastapi_supermarket.core.database import get_session
+from fastapi_supermarket.core.security import get_password_hash
 from fastapi_supermarket.models import User
 from fastapi_supermarket.schemas.user_schema import (
     UserCreate,
@@ -21,7 +22,10 @@ router = APIRouter()
 )
 def create_user(user: UserCreate, session: Session = Depends(get_session)):
     db_user = session.scalar(
-        select(User).where((User.cpf == user.cpf) | (User.email == user.email))
+        select(User).where(
+            User.deleted_at.is_(None)
+            & ((User.cpf == user.cpf) | (User.email == user.email))
+        )
     )
 
     if db_user:
@@ -40,7 +44,7 @@ def create_user(user: UserCreate, session: Session = Depends(get_session)):
         name=user.name,
         cpf=user.cpf,
         email=user.email,
-        password=user.password,
+        password=get_password_hash(user.password),
     )
     session.add(db_user)
     session.commit()
@@ -55,25 +59,27 @@ def create_user(user: UserCreate, session: Session = Depends(get_session)):
 def read_users(
     skip: int = 0, limit: int = 10, session: Session = Depends(get_session)
 ):
-    users = session.scalars(select(User).limit(limit).offset(skip)).all()
+    users = session.scalars(
+        select(User)
+        .where(User.deleted_at.is_(None))
+        .limit(limit)
+        .offset(skip)
+    ).all()
     return {'users': users}
 
 
 @router.get(
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserResponse
 )
-def get_user(user_id: int):
-    if user_id > len([1, 2, 3, 4, 5]) or user_id < 1:
+def get_user(user_id: int, session: Session = Depends(get_session)):
+    db_user = session.scalar(
+        select(User).where(User.deleted_at.is_(None) & (User.id == user_id))
+    )
+    if not db_user:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found!'
         )
-    # service.findById
-    return {
-        'id': user_id,
-        'name': 'Diego',
-        'cpf': '00000000000',
-        'email': 'diego.oliveira2@teste.com',
-    }
+    return db_user
 
 
 @router.put(
@@ -82,16 +88,20 @@ def get_user(user_id: int):
 def update_user(
     user_id: int, user: UserUpdate, session: Session = Depends(get_session)
 ):
-    db_user = session.scalar(select(User).where(User.id == user_id))
+    db_user = session.scalar(
+        select(User).where(User.deleted_at.is_(None) & (User.id == user_id))
+    )
     if not db_user:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found!'
         )
 
-    db_user.email = user.email
-    db_user.name = user.name
-    db_user.cpf = user.cpf
-    db_user.password = user.password
+    if user.email:
+        db_user.email = user.email
+    if user.cpf:
+        db_user.cpf = user.cpf
+    if user.password:
+        db_user.password = get_password_hash(user.password)
     db_user.updated_at = func.now()
 
     session.add(db_user)
@@ -103,7 +113,9 @@ def update_user(
 
 @router.delete('/users/{user_id}', status_code=HTTPStatus.OK)
 def delete_user(user_id: int, session: Session = Depends(get_session)):
-    db_user = session.scalar(select(User).where(User.id == user_id))
+    db_user = session.scalar(
+        select(User).where(User.deleted_at.is_(None) & (User.id == user_id))
+    )
     if not db_user:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found!'
