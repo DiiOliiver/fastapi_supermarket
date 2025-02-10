@@ -1,13 +1,8 @@
 from fastapi import FastAPI
 
-from fastapi_supermarket.controllers import users_controller
+from fastapi_supermarket.controllers import auth_controller, users_controller
 
 app = FastAPI()
 
-
-@app.get('/')
-def read_root():
-    return {'message': 'Olá Mundo!'}
-
-
+app.include_router(auth_controller.router, prefix='/auth', tags=['Auth'])
 app.include_router(users_controller.router, tags=['Users'])
