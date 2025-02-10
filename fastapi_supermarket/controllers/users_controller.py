@@ -96,6 +96,8 @@ def update_user(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found!'
         )
 
+    if user.name:
+        db_user.name = user.name
     if user.email:
         db_user.email = user.email
     if user.cpf:
