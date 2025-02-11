@@ -68,10 +68,10 @@ def test_get_user(client, user, token):
         f'/users/{user.id}', headers={'Authorization': f'Bearer {token}'}
     )
     assert response.status_code == HTTPStatus.OK
-    user = response.json()
-    assert user['name'] == 'Diego'
-    assert user['cpf'] == '00000000000'
-    assert user['email'] == 'diego.oliveira2@teste.com'
+    data = response.json()
+    assert data['name'] == user.name
+    assert data['cpf'] == user.cpf
+    assert data['email'] == user.email
 
 
 def test_not_enough_permissions_in_get_user(client, user, token):
