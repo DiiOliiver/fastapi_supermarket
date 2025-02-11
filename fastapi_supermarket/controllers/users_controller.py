@@ -3,8 +3,8 @@ from http import HTTPStatus
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import func, select
 
-from fastapi_supermarket.annotaded.T_CurrentUser import T_CurrentUser
-from fastapi_supermarket.annotaded.T_Session import T_Session
+from fastapi_supermarket.annotaded.t_currentuser import T_CurrentUser
+from fastapi_supermarket.annotaded.t_session import T_Session
 from fastapi_supermarket.core.security import (
     get_password_hash,
 )

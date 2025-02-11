@@ -3,8 +3,8 @@ from http import HTTPStatus
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 
-from fastapi_supermarket.annotaded.T_OAuth2Form import T_OAuth2Form
-from fastapi_supermarket.annotaded.T_Session import T_Session
+from fastapi_supermarket.annotaded.t_oauth2form import T_OAuth2Form
+from fastapi_supermarket.annotaded.t_session import T_Session
 from fastapi_supermarket.core.security import (
     create_access_token,
     get_password_hash,

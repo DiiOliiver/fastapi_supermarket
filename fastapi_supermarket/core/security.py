@@ -9,7 +9,7 @@ from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from fastapi_supermarket.core.database import get_session
+from fastapi_supermarket.annotaded.t_session import T_Session
 from fastapi_supermarket.models import User
 
 pwd_context = PasswordHash.recommended()
@@ -41,7 +41,7 @@ def create_access_token(data_payload: dict) -> dict:
 
 
 def get_current_user(
-    session: Session = Depends(get_session),
+    session: T_Session,
     token: str = Depends(oauth2_scheme),
 ):
     credentials_exception = HTTPException(
