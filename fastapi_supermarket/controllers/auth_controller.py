@@ -1,11 +1,10 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
-from fastapi_supermarket.core.database import get_session
+from fastapi_supermarket.annotaded.T_OAuth2Form import T_OAuth2Form
+from fastapi_supermarket.annotaded.T_Session import T_Session
 from fastapi_supermarket.core.security import (
     create_access_token,
     get_password_hash,
@@ -19,8 +18,8 @@ router = APIRouter(prefix='/auth', tags=['Auth'])
 
 @router.post('/token', status_code=HTTPStatus.OK, response_model=Token)
 def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    session: Session = Depends(get_session),
+    session: T_Session,
+    form_data: T_OAuth2Form,
 ):
     user = session.scalar(
         select(User).where(
