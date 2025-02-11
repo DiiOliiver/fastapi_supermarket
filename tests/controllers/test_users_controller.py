@@ -78,7 +78,7 @@ def test_not_enough_permissions_in_get_user(client, user, token):
     response = client.get(
         '/users/7', headers={'Authorization': f'Bearer {token}'}
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {'detail': 'Not enough permissions!'}
 
 
@@ -101,7 +101,7 @@ def test_not_enough_permissions_in_update_user(client, user, token):
         headers={'Authorization': f'Bearer {token}'},
         json=request_user_update,
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {'detail': 'Not enough permissions!'}
 
 
@@ -117,7 +117,7 @@ def test_not_enough_permissions_in_delete_user(client, user, token):
     response = client.delete(
         '/users/7', headers={'Authorization': f'Bearer {token}'}
     )
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {'detail': 'Not enough permissions!'}
 
 

@@ -14,7 +14,7 @@ from fastapi_supermarket.core.security import (
 from fastapi_supermarket.models import User
 from fastapi_supermarket.schemas.token_schema import Token
 
-router = APIRouter()
+router = APIRouter(prefix='/auth', tags=['Auth'])
 
 
 @router.post('/token', status_code=HTTPStatus.OK, response_model=Token)

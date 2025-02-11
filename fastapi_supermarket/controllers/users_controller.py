@@ -17,15 +17,14 @@ from fastapi_supermarket.schemas.user_schema import (
     UserUpdate,
 )
 
-router = APIRouter()
+router = APIRouter(prefix='/users', tags=['Users'])
 
 
-@router.post(
-    '/users', status_code=HTTPStatus.CREATED, response_model=UserResponse
-)
+@router.post('/', status_code=HTTPStatus.CREATED, response_model=UserResponse)
 def create_user(
     user: UserCreate,
     session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
 ):
     db_user = session.scalar(
         select(User).where(
@@ -54,9 +53,7 @@ def create_user(
     return db_user
 
 
-@router.get(
-    '/users', status_code=HTTPStatus.OK, response_model=UserListResponse
-)
+@router.get('/', status_code=HTTPStatus.OK, response_model=UserListResponse)
 def read_users(
     skip: int = 0,
     limit: int = 10,
@@ -70,7 +67,7 @@ def read_users(
 
 
 @router.get(
-    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserResponse
+    '/{user_id}', status_code=HTTPStatus.OK, response_model=UserResponse
 )
 def get_user(
     user_id: int,
@@ -78,7 +75,7 @@ def get_user(
 ):
     if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
+            status_code=HTTPStatus.FORBIDDEN,
             detail='Not enough permissions!',
         )
 
@@ -86,17 +83,17 @@ def get_user(
 
 
 @router.put(
-    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserResponse
+    '/{user_id}', status_code=HTTPStatus.OK, response_model=UserResponse
 )
 def update_user(
     user_id: int,
     user: UserUpdate,
     session: Session = Depends(get_session),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
+            status_code=HTTPStatus.FORBIDDEN,
             detail='Not enough permissions!',
         )
 
@@ -113,7 +110,7 @@ def update_user(
     return current_user
 
 
-@router.delete('/users/{user_id}', status_code=HTTPStatus.OK)
+@router.delete('/{user_id}', status_code=HTTPStatus.OK)
 def delete_user(
     user_id: int,
     session: Session = Depends(get_session),
@@ -121,7 +118,7 @@ def delete_user(
 ):
     if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
+            status_code=HTTPStatus.FORBIDDEN,
             detail='Not enough permissions!',
         )
 
