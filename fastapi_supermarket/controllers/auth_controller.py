@@ -3,6 +3,7 @@ from http import HTTPStatus
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 
+from fastapi_supermarket.annotaded.t_currentuser import T_CurrentUser
 from fastapi_supermarket.annotaded.t_oauth2form import T_OAuth2Form
 from fastapi_supermarket.annotaded.t_session import T_Session
 from fastapi_supermarket.core.security import (
@@ -38,3 +39,9 @@ def login_for_access_token(
     access_token = create_access_token(data_payload={'sub': user.email})
 
     return {'access_token': access_token, 'token_type': 'Bearer'}
+
+
+@router.post('/token/refresh', status_code=HTTPStatus.OK, response_model=Token)
+def refresh_access_token(current_user: T_CurrentUser):
+    new_token = create_access_token(data_payload={'sub': current_user.email})
+    return {'access_token': new_token, 'token_type': 'Bearer'}
