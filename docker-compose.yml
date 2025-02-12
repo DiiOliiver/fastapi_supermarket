@@ -16,6 +16,7 @@ services:
 
   fastapi_app:
     build: .
+    entrypoint: ./entrypoint.sh
     depends_on:
       - fastapi_db
     environment:
