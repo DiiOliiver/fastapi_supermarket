@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from fastapi_supermarket.annotaded.t_currentuser import T_CurrentUser
 from fastapi_supermarket.annotaded.t_session import T_Session
@@ -14,6 +14,7 @@ from fastapi_supermarket.services.user_service import (
     create,
     delete,
     find_all,
+    find_by_id,
     update,
 )
 
@@ -21,7 +22,8 @@ router = APIRouter(prefix='/users', tags=['Users'])
 
 
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=UserResponse)
-def create_user(user: UserCreate, session: T_Session):
+def create_user(user: UserCreate, session: T_Session) -> UserResponse:
+    """Cria uma novo usuário."""
     return create(user, session)
 
 
@@ -31,7 +33,8 @@ def read_users(
     current_user: T_CurrentUser,
     skip: int = 0,
     limit: int = 10,
-):
+) -> UserListResponse:
+    """Retorna todos os usuários cadastrados."""
     return find_all(session, skip, limit)
 
 
@@ -41,14 +44,9 @@ def read_users(
 def get_user(
     user_id: int,
     current_user: T_CurrentUser,
-):
-    if current_user.id != user_id:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail='Not enough permissions!',
-        )
-
-    return current_user
+) -> UserResponse:
+    """Retorna um usuário por ID."""
+    return find_by_id(user_id, current_user)
 
 
 @router.put(
@@ -59,7 +57,8 @@ def update_user(
     user: UserUpdate,
     session: T_Session,
     current_user: T_CurrentUser,
-):
+) -> UserResponse:
+    """Retorna um usuário por ID e altera seus registros."""
     return update(user_id, user, session, current_user)
 
 
@@ -68,5 +67,6 @@ def delete_user(
     user_id: int,
     session: T_Session,
     current_user: T_CurrentUser,
-):
+) -> dict[str, str]:
+    """Retorna um usuário por ID e remove o registro de consultas."""
     return delete(user_id, session, current_user)

@@ -11,11 +11,13 @@ from fastapi_supermarket.core.security import (
 from fastapi_supermarket.models import User
 from fastapi_supermarket.schemas.user_schema import (
     UserCreate,
+    UserListResponse,
+    UserResponse,
     UserUpdate,
 )
 
 
-def create(user: UserCreate, session: T_Session):
+def create(user: UserCreate, session: T_Session) -> UserResponse:
     db_user = session.scalar(
         select(User).where(
             User.deleted_at.is_(None)
@@ -46,11 +48,20 @@ def find_all(
     session: T_Session,
     skip: int,
     limit: int,
-):
+) -> UserListResponse:
     users = session.scalars(
         select(User).where(User.deleted_at.is_(None)).limit(limit).offset(skip)
     ).all()
     return {'users': users}
+
+
+def find_by_id(user_id: int, current_user: T_CurrentUser) -> UserResponse:
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions!',
+        )
+    return current_user
 
 
 def update(
@@ -58,7 +69,7 @@ def update(
     user: UserUpdate,
     session: T_Session,
     current_user: T_CurrentUser,
-):
+) -> UserResponse:
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
@@ -82,7 +93,7 @@ def delete(
     user_id: int,
     session: T_Session,
     current_user: T_CurrentUser,
-):
+) -> dict[str, str]:
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,

@@ -1,17 +1,21 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, HTTPException
-from sqlalchemy import func, select
-from sqlalchemy.orm import joinedload
+from fastapi import APIRouter
 
 from fastapi_supermarket.annotaded.t_currentuser import T_CurrentUser
 from fastapi_supermarket.annotaded.t_session import T_Session
-from fastapi_supermarket.models import Category, Product
 from fastapi_supermarket.schemas.product_schema import (
     ProductCreate,
     ProductListResponse,
     ProductResponse,
     ProductUpdate,
+)
+from fastapi_supermarket.services.product_service import (
+    create,
+    delete,
+    find_all,
+    find_by_id,
+    update,
 )
 
 router = APIRouter(prefix='/products', tags=['Products'])
@@ -22,26 +26,9 @@ router = APIRouter(prefix='/products', tags=['Products'])
 )
 def create_product(
     product: ProductCreate, session: T_Session, current_user: T_CurrentUser
-):
-    if not session.get(Category, product.id_category):
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='Invalid category ID'
-        )
-
-    db_product = Product(
-        id_category=product.id_category,
-        description=product.description,
-        price=product.price,
-    )
-    session.add(db_product)
-    session.commit()
-    session.refresh(db_product)
-    return ProductResponse(
-        id=db_product.id,
-        description=db_product.description,
-        price=db_product.price,
-        category=db_product.category.description,
-    )
+) -> ProductResponse:
+    """Cria uma novo produto."""
+    return create(product, session)
 
 
 @router.get('/', status_code=HTTPStatus.OK, response_model=ProductListResponse)
@@ -50,30 +37,9 @@ def read_products(
     current_user: T_CurrentUser,
     skip: int = 0,
     limit: int = 10,
-):
-    query = (
-        select(Product)
-        .where(Product.deleted_at.is_(None))
-        .options(joinedload(Product.category))
-    )
-    products = session.scalars(query.limit(limit).offset(skip)).all()
-
-    if not products:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='Product not found'
-        )
-
-    return ProductListResponse(
-        products=[
-            {
-                'id': ps.id,
-                'description': ps.description,
-                'category': ps.category.description,
-                'price': ps.price,
-            }
-            for ps in products
-        ],
-    )
+) -> ProductListResponse:
+    """Retorna todos os produtos cadastrados."""
+    return find_all(session, skip=skip, limit=limit)
 
 
 @router.get(
@@ -85,25 +51,9 @@ def get_product(
     product_id: int,
     session: T_Session,
     current_user: T_CurrentUser,
-):
-    query = (
-        select(Product)
-        .where(Product.deleted_at.is_(None), Product.id == product_id)
-        .options(joinedload(Product.category))
-    )
-    product = session.scalar(query)
-
-    if not product:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='Product not found'
-        )
-
-    return ProductResponse(
-        id=product.id,
-        description=product.description,
-        category=product.category.description,
-        price=product.price,
-    )
+) -> ProductResponse:
+    """Retorna um produto por ID."""
+    return find_by_id(product_id, session)
 
 
 @router.put(
@@ -114,49 +64,14 @@ def update_product(
     product: ProductUpdate,
     session: T_Session,
     current_user: T_CurrentUser,
-):
-    query = select(Product).where(
-        Product.deleted_at.is_(None) & (Product.id == product_id)
-    )
-    db_product = session.scalar(query)
-    if not db_product:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='Product not found'
-        )
-
-    if product.id_category and not session.get(Category, product.id_category):
-        raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='Invalid category ID'
-        )
-
-    if product.id_category:
-        db_product.id_category = product.id_category
-    if product.description:
-        db_product.description = product.description
-    if product.price:
-        db_product.price = product.price
-    db_product.updated_at = func.now()
-
-    session.commit()
-    session.refresh(db_product)
-    return db_product
+) -> ProductResponse:
+    """Retorna um produto por ID e altera seus registros."""
+    return update(product_id, product, session)
 
 
 @router.delete('/{product_id}', status_code=HTTPStatus.OK)
 def delete_product(
     product_id: int, session: T_Session, current_user: T_CurrentUser
-):
-    query = select(Product).where(
-        Product.deleted_at.is_(None) & (Product.id == product_id)
-    )
-    db_product = session.scalar(query)
-    if not db_product:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='Product not found'
-        )
-
-    db_product.deleted_at = func.now()
-    session.commit()
-    session.refresh(db_product)
-
-    return {'message': 'Product deleted!'}
+) -> dict[str, str]:
+    """Retorna um produto por ID e remove o registro de consultas."""
+    return delete(product_id, session)

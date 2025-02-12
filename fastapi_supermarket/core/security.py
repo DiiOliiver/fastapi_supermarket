@@ -29,7 +29,7 @@ def verify_password(
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(data_payload: dict) -> dict:
+def create_access_token(data_payload: dict) -> str:
     to_encode = data_payload.copy()
     expire = datetime.now(tz=ZoneInfo('America/Manaus')) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
