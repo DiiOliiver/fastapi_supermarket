@@ -21,11 +21,7 @@ router = APIRouter(prefix='/users', tags=['Users'])
 
 
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=UserResponse)
-def create_user(
-    user: UserCreate,
-    session: T_Session,
-    current_user: T_CurrentUser,
-):
+def create_user(user: UserCreate, session: T_Session):
     return create(user, session)
 
 
